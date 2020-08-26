@@ -38,7 +38,7 @@ const postApiheaders = () => {
 export const getApiRequest = ( path, query = {} ) => ( {
 	headers: getApiHeaders(),
 	url: getRequestString( path, query ),
-	credentials: 'same-origin',
+	credentials: 'include',
 	method: 'get',
 } );
 
@@ -53,7 +53,7 @@ export const postApiRequest = ( path, params = {}, query = {} ) => {
 	const request = {
 		headers: postApiheaders(),
 		url: getRequestString( path, query ),
-		credentials: 'same-origin',
+		credentials: 'include',
 		method: 'post',
 		body: '{}',
 	};
