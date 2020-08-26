@@ -68,3 +68,19 @@ export function getWordPressUrl( query, defaults, url ) {
 
 	return '?' + qs.stringify( existing, { arrayFormat: 'brackets' } );
 }
+
+/**
+ * Get the 'sub' parameter
+ *
+ * @param {string[]} allowedPages Allowed pages
+ * @param {string} [url]
+ */
+export function getPluginPage( allowedPages, url ) {
+	const params = getPageUrl( url );
+
+	if ( params.sub && allowedPages.indexOf( params.sub ) !== -1 ) {
+		return params.sub;
+	}
+
+	return allowedPages[ 0 ];
+}
