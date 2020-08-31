@@ -14,6 +14,7 @@ function createApiError( code, message, request ) {
 		message: getErrorMessage( message ),
 		request,
 		data: request.apiFetch.data ? request.apiFetch.data : null,
+		jsonData: code && code.data ? code.data : null,
 	};
 }
 
@@ -59,6 +60,10 @@ const checkResponse = ( response, request ) => {
 
 	if ( request.apiFetch ) {
 		const { status, redirected, statusText } = request.apiFetch;
+
+		if ( response.code && response.message ) {
+			throw createApiError( response, response, request );
+		}
 
 		if ( status < 200 || status >= 300 ) {
 			throw createApiError( status, statusText, request );
@@ -166,5 +171,12 @@ apiFetch.createRootURLMiddleware = ( rootURL ) => {
 apiFetch.resetMiddlewares = () => {
 	middlewares = [];
 };
+apiFetch.replaceRootURLMiddleware = ( rootURL ) => {
+	for ( let index = 0; index < middlewares.length; index++ ) {
+		if ( middlewares[ index ] === apiFetch.rootURLMiddleware ) {
+			middlewares[ index ] = apiFetch.createRootURLMiddleware( rootURL );
+		}
+	}
+}
 
 export default apiFetch;
