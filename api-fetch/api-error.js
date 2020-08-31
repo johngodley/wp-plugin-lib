@@ -34,10 +34,6 @@ export const getErrorCode = ( json ) => {
 		return json.error_code;
 	}
 
-	if ( json.data && json.data.error_code ) {
-		return json.data.error_code;
-	}
-
 	if ( json === 0 ) {
 		return 'admin-ajax';
 	}
@@ -48,6 +44,10 @@ export const getErrorCode = ( json ) => {
 
 	if ( json.name ) {
 		return json.name;
+	}
+
+	if ( json.data && json.data.error_code ) {
+		return json.data.error_code;
 	}
 
 	return json;
