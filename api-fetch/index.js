@@ -88,6 +88,10 @@ function setNonce( response ) {
 const getResponseData = ( response ) => response.text();
 
 const parseResponse = ( response, request ) => {
+	if ( response === '' && ( request.apiFetch.status < 200 || request.apiFetch.status > 300 ) ) {
+		return response;
+	}
+
 	try {
 		const json = JSON.parse( response.replace( /\ufeff/, '' ) );
 
@@ -156,7 +160,8 @@ function apiFetch( request ) {
 	} );
 }
 
-apiFetch.getUrl = ( url ) => apiFetch.rootURLMiddleware( { url }, ( options ) => apiFetch.nonceMiddleware( options, ( item ) => item.url ) );
+apiFetch.getUrl = ( url ) =>
+	apiFetch.rootURLMiddleware( { url }, ( options ) => apiFetch.nonceMiddleware( options, ( item ) => item.url ) );
 apiFetch.use = registerMiddleware;
 apiFetch.createNonceMiddleware = ( nonce ) => {
 	const middle = createNonceMiddleware( nonce );
@@ -177,6 +182,6 @@ apiFetch.replaceRootURLMiddleware = ( rootURL ) => {
 			middlewares[ index ] = apiFetch.createRootURLMiddleware( rootURL );
 		}
 	}
-}
+};
 
 export default apiFetch;
