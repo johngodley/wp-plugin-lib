@@ -35,6 +35,7 @@ const recordResponse = ( response, request ) => {
 		action: request.url.replace( /[\?&]_wpnonce=[a-f0-9]*/, '' ) + ' ' + request.method.toUpperCase(),
 		body: typeof request.body === 'object' ? JSON.stringify( request.body ) : request.body,
 	};
+	request.headers = response.headers;
 
 	if ( response.status && response.statusText !== undefined ) {
 		request.apiFetch.status = response.status;
@@ -69,7 +70,7 @@ const checkResponse = ( response, request ) => {
 			throw createApiError( status, statusText, request );
 		}
 
-		if ( redirected ) {
+		if ( redirected && request.method === 'get' ) {
 			throw createApiError( 'rest_api_redirected', 'REST API redirected', request );
 		}
 	}
