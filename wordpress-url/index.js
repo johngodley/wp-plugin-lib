@@ -28,7 +28,10 @@ export function removeFromPageUrl( queryToRemove ) {
 
 	delete existing[ queryToRemove ];
 
-	const newUrl = Object.keys( existing ).length === 0 ? '' : '?' + qs.stringify( existing );
+	const newUrl =
+		Object.keys( existing ).length === 0
+			? ''
+			: '?' + qs.stringify( existing, { arrayFormat: 'brackets', indices: false } );
 
 	if ( document.location.search !== newUrl ) {
 		history.pushState( {}, '', newUrl );
@@ -66,7 +69,7 @@ export function getWordPressUrl( query, defaults, url ) {
 		}
 	}
 
-	return '?' + qs.stringify( existing, { arrayFormat: 'brackets' } );
+	return '?' + qs.stringify( existing, { arrayFormat: 'brackets', indices: false } );
 }
 
 /**
