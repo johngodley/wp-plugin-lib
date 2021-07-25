@@ -42,10 +42,6 @@ const recordResponse = ( response, request ) => {
 		request.apiFetch.statusText = response.statusText;
 	}
 
-	if ( response.redirected ) {
-		request.apiFetch.redirected = response.redirected;
-	}
-
 	return response;
 };
 
@@ -60,7 +56,7 @@ const checkResponse = ( response, request ) => {
 	}
 
 	if ( request.apiFetch ) {
-		const { status, redirected, statusText } = request.apiFetch;
+		const { status, statusText } = request.apiFetch;
 
 		if ( response.code && response.message ) {
 			throw createApiError( response, response, request );
@@ -68,10 +64,6 @@ const checkResponse = ( response, request ) => {
 
 		if ( status < 200 || status >= 300 ) {
 			throw createApiError( status, statusText, request );
-		}
-
-		if ( redirected && request.method === 'get' ) {
-			throw createApiError( 'rest_api_redirected', 'REST API redirected', request );
 		}
 	}
 
