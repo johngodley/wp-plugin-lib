@@ -40,6 +40,7 @@ export const getApiRequest = ( path, query = {} ) => ( {
 	url: getRequestString( path, query ),
 	credentials: 'include',
 	method: 'get',
+	redirect: 'error',
 } );
 
 /**

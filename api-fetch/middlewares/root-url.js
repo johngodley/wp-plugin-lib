@@ -1,7 +1,3 @@
-/**
- * Internal dependencies
- */
-
 function removeWP( url ) {
 	return url.replace( 'wp-json/wp-json', 'wp-json' ).replace( '=/wp-json', '=' );
 }
@@ -22,8 +18,12 @@ function convertParams( root, url ) {
 	return url;
 }
 
+function addRoute( base, route ) {
+	return base + '/' + route;
+}
+
 function mergeWithRoot( root, url ) {
-	return removeWP( removeTrailingSlash( root ) + '/' + convertParams( root, removeLeadingSlash( url ) ) );
+	return removeWP( addRoute( removeTrailingSlash( root ), convertParams( root, removeLeadingSlash( url ) ) ) );
 }
 
 function createRootURLMiddleware( rootURL ) {
