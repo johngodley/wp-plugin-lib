@@ -1,6 +1,8 @@
 function addNonceToUrl( url, nonce ) {
-	if ( url.indexOf( 'api.redirect.li' ) !== -1 ) {
-		return url;
+	if ( url.indexOf( 'http:' ) !== -1 || url.indexOf( 'https:' ) !== -1 ) {
+		if ( url.indexOf( document.location.origin ) === -1 ) {
+			return url;
+		}
 	}
 
 	return url + ( url.indexOf( '?' ) === -1 ? '?' : '&' ) + '_wpnonce=' + encodeURIComponent( nonce );
