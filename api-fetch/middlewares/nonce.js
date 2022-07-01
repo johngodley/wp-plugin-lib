@@ -1,18 +1,24 @@
-function addNonceToUrl( url, nonce ) {
-	if ( url.indexOf( 'http:' ) !== -1 || url.indexOf( 'https:' ) !== -1 ) {
-		if ( url.indexOf( document.location.origin ) === -1 ) {
-			return url;
-		}
-	}
-
-	return url + ( url.indexOf( '?' ) === -1 ? '?' : '&' ) + '_wpnonce=' + encodeURIComponent( nonce );
-}
-
 function createNonceMiddleware( nonce ) {
 	function middleware( options, next ) {
+		const { headers = {} } = options;
+
+		// If an 'X-WP-Nonce' header (or any case-insensitive variation
+		// thereof) was specified, no need to add a nonce header.
+		for ( const headerName in headers ) {
+			if (
+				headerName.toLowerCase() === 'x-wp-nonce' &&
+				headers[ headerName ] === middleware.nonce
+			) {
+				return next( options );
+			}
+		}
+
 		return next( {
 			...options,
-			url: addNonceToUrl( options.url, middleware.nonce ),
+			headers: {
+				...headers,
+				'X-WP-Nonce': middleware.nonce,
+			}
 		} );
 	}
 
