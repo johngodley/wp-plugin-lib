@@ -18,16 +18,16 @@ const getRequestString = ( path, params = {} ) => {
 };
 
 const getApiHeaders = () => {
-	return new Headers( {
+	return {
 		Accept: 'application/json, */*;q=0.1',
-	} );
-};
+	};
+}
 
 const postApiheaders = () => {
-	return new Headers( {
+	return {
 		'Content-Type': 'application/json; charset=utf-8',
 		Accept: 'application/json, */*;q=0.1',
-	} );
+	};
 };
 
 /**
@@ -76,7 +76,7 @@ export const postApiRequest = ( path, params = {}, query = {} ) => {
 export const uploadApiRequest = ( path, params, file ) => {
 	const request = postApiRequest( path, params );
 
-	request.headers.delete( 'Content-Type' );
+	delete request.headers['Content-Type'];
 	request.body = new FormData();
 	request.body.append( 'file', file );
 
