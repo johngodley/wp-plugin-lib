@@ -1,5 +1,5 @@
 import { getApiRequest, postApiRequest } from '../api-method';
-import apiFetch from 'wp-plugin-lib/api-fetch';
+import { apiFetch } from '@wp-plugin-lib';
 
 apiFetch.use( apiFetch.createRootURLMiddleware( '/wp-json/' ) );
 apiFetch.use( apiFetch.createNonceMiddleware( 'nonce' ) );
