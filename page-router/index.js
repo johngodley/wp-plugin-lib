@@ -8,7 +8,7 @@ import { __ } from '@wordpress/i18n';
 /**
  * Internal dependencies
  */
-import { getWordPressUrl, getPluginPage } from '../wordpress-url';
+import { getWordPressUrl, getPluginPage } from '@wp-plugin-lib';
 
 /**
  *
@@ -26,7 +26,7 @@ function PageRouter( props ) {
 	const previousPage = useRef();
 
 	function onPageChanged() {
-		const page = getPluginPage( allowedPages );
+		const page = getPluginPage( window.Redirectioni10n?.caps?.pages || [] );
 
 		setPage( page );
 	}
