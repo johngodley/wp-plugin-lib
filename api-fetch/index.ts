@@ -1,0 +1,179 @@
+import { getErrorCode, getErrorMessage } from './api-error';
+import createNonceMiddleware from './middlewares/nonce';
+import createRootURLMiddleware from './middlewares/root-url';
+
+type ApiFetchOptions = any;
+type ApiFetchMiddleware = ( options: ApiFetchOptions, next: ( options: ApiFetchOptions ) => Promise< unknown > ) => any;
+type ApiFetchFunction = any;
+
+let middlewares: ApiFetchMiddleware[] = [];
+
+function createApiError( code: unknown, message: unknown, request: ApiFetchOptions ) {
+	return {
+		code: getErrorCode( code as any ),
+		message: getErrorMessage( message as any ),
+		request,
+		data: request.apiFetch?.data ? request.apiFetch?.data : null,
+		jsonData: code && ( code as { data?: unknown } ).data ? ( code as { data?: unknown } ).data : null,
+	};
+}
+
+function registerMiddleware( middleware: ApiFetchMiddleware ) {
+	middlewares.unshift( middleware );
+}
+
+const checkStatus = ( response: Response ) => {
+	if ( response.status >= 200 && response.status < 300 ) {
+		return response;
+	}
+
+	throw response;
+};
+
+const recordResponse = ( response: Response, request: ApiFetchOptions ) => {
+	request.apiFetch = {
+		action: request.url.replace( /[\?&]_wpnonce=[a-f0-9]*/, '' ) + ' ' + request.method.toUpperCase(),
+		body: typeof request.body === 'object' ? JSON.stringify( request.body ) : request.body,
+	};
+	request.headers = response.headers as any;
+
+	if ( response.status && response.statusText !== undefined ) {
+		request.apiFetch.status = response.status;
+		request.apiFetch.statusText = response.statusText;
+	}
+
+	return response;
+};
+
+const recordData = ( response: unknown, request: ApiFetchOptions ) => {
+	if ( request.apiFetch ) {
+		request.apiFetch.data = response;
+	}
+
+	return response;
+};
+
+const checkResponse = ( response: any, request: ApiFetchOptions ) => {
+	if ( response?.error || response?.error_code ) {
+		throw createApiError( response as any, ( response as any ).message, request );
+	}
+
+	if ( request.apiFetch ) {
+		const { status, statusText } = request.apiFetch;
+
+		if ( response?.code && response?.message ) {
+			throw createApiError( response as any, response as any, request );
+		}
+
+		if ( status !== undefined && ( status < 200 || status >= 300 ) ) {
+			throw createApiError( status, statusText, request );
+		}
+	}
+
+	return response;
+};
+
+function setNonce( response: Response ) {
+	if ( response.headers.get( 'x-wp-nonce' ) && apiFetch.nonceMiddleware ) {
+		apiFetch.nonceMiddleware.nonce = response.headers.get( 'x-wp-nonce' ) ?? apiFetch.nonceMiddleware.nonce;
+	}
+
+	return response;
+}
+
+const getResponseData = ( response: Response ) => response.text();
+
+const parseResponse = ( response: string, request: ApiFetchOptions ) => {
+	const status = request.apiFetch?.status;
+
+	if ( response === '' && status !== undefined && ( status < 200 || status > 300 ) ) {
+		return response;
+	}
+
+	try {
+		const json = JSON.parse( response.replace( /\ufeff/, '' ) );
+
+		if ( json === 0 ) {
+			throw createApiError( 'json-zero', 'Failed to get data', request );
+		}
+
+		return json;
+	} catch ( error: any ) {
+		throw createApiError( error, ( error as any )?.message, request );
+	}
+};
+
+const fetchHandler = ( request: ApiFetchOptions ) => {
+	return fetch( request.url, request )
+		.then( setNonce )
+		.then( ( response ) => recordResponse( response, request ) )
+		.then( getResponseData )
+		.then( ( response ) => recordData( response, request ) )
+		.then( ( response: any ) => parseResponse( response as any, request ) )
+		.then( ( response: any ) => checkResponse( response, request ) );
+};
+
+const apiFetch = ( ( request: ApiFetchOptions ) => {
+	const steps: ApiFetchMiddleware[] = [ ...middlewares, ( options ) => fetchHandler( options ) ];
+
+	const createRunStep =
+		( index: number ) =>
+		( workingOptions: ApiFetchOptions ): Promise< unknown > => {
+			const step = steps[ index ];
+			if ( index === steps.length - 1 ) {
+				return step( workingOptions, () => Promise.resolve() );
+			}
+
+			const next = createRunStep( index + 1 );
+			return step( workingOptions, next );
+		};
+
+	return new Promise( ( resolve, reject ) => {
+		createRunStep( 0 )( request )
+			.then( resolve )
+			.catch( ( error: any ) => {
+				if ( error.code !== 'rest_cookie_invalid_nonce' ) {
+					return reject( error );
+				}
+
+				window
+					.fetch( 'admin-ajax.php?action=rest-nonce' )
+					.then( checkStatus )
+					.then( getResponseData )
+					.then( ( text ) => {
+						apiFetch.nonceMiddleware.nonce = text;
+
+						apiFetch( request ).then( resolve ).catch( reject );
+					} )
+					.catch( reject );
+			} );
+	} );
+} ) as ApiFetchFunction;
+
+apiFetch.getUrl = ( url: any ) =>
+	apiFetch.rootURLMiddleware( { url }, ( options: any ) =>
+		apiFetch.nonceMiddleware( options, ( item: any ) => item.url )
+	);
+apiFetch.use = registerMiddleware;
+apiFetch.createNonceMiddleware = ( nonce: any ) => {
+	const middle = createNonceMiddleware( nonce );
+	apiFetch.nonceMiddleware = middle;
+	return middle;
+};
+apiFetch.createRootURLMiddleware = ( rootURL: any ) => {
+	const middle = createRootURLMiddleware( rootURL );
+	apiFetch.rootURLMiddleware = middle;
+	return middle;
+};
+apiFetch.resetMiddlewares = () => {
+	middlewares = [];
+};
+apiFetch.replaceRootURLMiddleware = ( rootURL: any ) => {
+	for ( let index = 0; index < middlewares.length; index++ ) {
+		if ( middlewares[ index ] === apiFetch.rootURLMiddleware ) {
+			middlewares[ index ] = apiFetch.createRootURLMiddleware( rootURL );
+		}
+	}
+};
+
+export default apiFetch;

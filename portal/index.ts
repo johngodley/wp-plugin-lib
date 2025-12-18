@@ -1,12 +1,6 @@
 import { PORTAL_WRAPPER } from '../../wp-plugin-components/constant';
 
-/**
- * Get a portal node, or create it if it doesn't exist.
- *
- * @param {string} portalName DOM ID of the portal
- * @returns {Element}
- */
-export default function getPortal( portalName ) {
+export default function getPortal( portalName: string ): HTMLElement | null {
 	let portal = document.getElementById( portalName );
 
 	if ( portal === null ) {
