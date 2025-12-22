@@ -4,7 +4,17 @@ import createRootURLMiddleware from './middlewares/root-url';
 
 type ApiFetchOptions = any;
 type ApiFetchMiddleware = ( options: ApiFetchOptions, next: ( options: ApiFetchOptions ) => Promise< unknown > ) => any;
-type ApiFetchFunction = any;
+type ApiFetchFunction = {
+	< T = unknown >( request: ApiFetchOptions ): Promise< T >;
+	getUrl: ( url: any ) => any;
+	use: ( middleware: ApiFetchMiddleware ) => void;
+	createNonceMiddleware: ( nonce: any ) => any;
+	createRootURLMiddleware: ( rootURL: any ) => any;
+	resetMiddlewares: () => void;
+	replaceRootURLMiddleware: ( rootURL: any ) => void;
+	nonceMiddleware?: any;
+	rootURLMiddleware?: any;
+};
 
 let middlewares: ApiFetchMiddleware[] = [];
 
@@ -113,13 +123,17 @@ const fetchHandler = ( request: ApiFetchOptions ) => {
 		.then( ( response: any ) => checkResponse( response, request ) );
 };
 
-const apiFetch = ( ( request: ApiFetchOptions ) => {
+const apiFetch = ( < T = unknown >( request: ApiFetchOptions ): Promise< T > => {
 	const steps: ApiFetchMiddleware[] = [ ...middlewares, ( options ) => fetchHandler( options ) ];
 
 	const createRunStep =
 		( index: number ) =>
 		( workingOptions: ApiFetchOptions ): Promise< unknown > => {
 			const step = steps[ index ];
+			if ( ! step ) {
+				return Promise.reject( new Error( 'Middleware step is undefined' ) );
+			}
+
 			if ( index === steps.length - 1 ) {
 				return step( workingOptions, () => Promise.resolve() );
 			}
@@ -128,9 +142,9 @@ const apiFetch = ( ( request: ApiFetchOptions ) => {
 			return step( workingOptions, next );
 		};
 
-	return new Promise( ( resolve, reject ) => {
+	return new Promise< T >( ( resolve, reject ) => {
 		createRunStep( 0 )( request )
-			.then( resolve )
+			.then( ( value ) => resolve( value as T ) )
 			.catch( ( error: any ) => {
 				if ( error.code !== 'rest_cookie_invalid_nonce' ) {
 					return reject( error );
@@ -143,7 +157,7 @@ const apiFetch = ( ( request: ApiFetchOptions ) => {
 					.then( ( text ) => {
 						apiFetch.nonceMiddleware.nonce = text;
 
-						apiFetch( request ).then( resolve ).catch( reject );
+						apiFetch< T >( request ).then( resolve ).catch( reject );
 					} )
 					.catch( reject );
 			} );

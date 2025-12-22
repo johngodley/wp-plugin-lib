@@ -1,5 +1,3 @@
-import querystring from 'qs';
-
 type ApiQuery = Record< string, unknown >;
 
 export type ApiRequest = {
@@ -12,11 +10,47 @@ export type ApiRequest = {
 	[ key: string ]: unknown;
 };
 
+/**
+ * Serialize query parameters for API requests
+ * Handles arrays using bracket format (source[]=post&source[]=page)
+ * @param params
+ */
+function stringifyApiQuery( params: ApiQuery ): string {
+	const urlParams = new URLSearchParams();
+
+	for ( const key in params ) {
+		const value = params[ key ];
+
+		if ( value === null || value === undefined ) {
+			continue;
+		}
+
+		if ( Array.isArray( value ) ) {
+			// Use bracket format for arrays
+			for ( const item of value ) {
+				if ( item !== null && item !== undefined ) {
+					urlParams.append( `${ key }[]`, String( item ) );
+				}
+			}
+		} else if ( typeof value === 'object' ) {
+			// For nested objects, JSON stringify (though API might not use this)
+			urlParams.append( key, JSON.stringify( value ) );
+		} else {
+			urlParams.append( key, String( value ) );
+		}
+	}
+
+	return urlParams.toString();
+}
+
 const getRequestString = ( path: string, params: ApiQuery = {} ) => {
 	const base = path + '/';
 
-	if ( Object.keys( params ).length > 0 && querystring.stringify( params ).length > 0 ) {
-		return base + ( base.indexOf( '?' ) === -1 ? '?' : '&' ) + querystring.stringify( params );
+	if ( Object.keys( params ).length > 0 ) {
+		const queryString = stringifyApiQuery( params );
+		if ( queryString.length > 0 ) {
+			return base + ( base.indexOf( '?' ) === -1 ? '?' : '&' ) + queryString;
+		}
 	}
 
 	return base;
