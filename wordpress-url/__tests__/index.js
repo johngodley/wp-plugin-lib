@@ -2,10 +2,7 @@
  * Internal dependencies
  */
 
-import {
-	getPageUrl,
-	getWordPressUrl,
-} from '../index';
+import { getPageUrl, getWordPressUrl } from '../index';
 
 describe( 'WordPress URL', () => {
 	test( 'getPageUrl returns empty query when no params', () => {
@@ -25,6 +22,8 @@ describe( 'WordPress URL', () => {
 	} );
 
 	test( 'getWordPressUrl returns existing URL with no params when defaulted', () => {
-		expect( getWordPressUrl( { cat: 'monkey' }, { cat: 'monkey' }, '?existing=thing' ) ).toEqual( '?existing=thing' );
+		expect( getWordPressUrl( { cat: 'monkey' }, { cat: 'monkey' }, '?existing=thing' ) ).toEqual(
+			'?existing=thing'
+		);
 	} );
 } );

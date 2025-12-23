@@ -1,16 +1,23 @@
-function removeWP( url ) {
+type RequestOptions = {
+	url: string;
+	[ key: string ]: unknown;
+};
+
+type Middleware = ( options: RequestOptions, next: ( options: RequestOptions ) => any ) => any;
+
+function removeWP( url: string ) {
 	return url.replace( 'wp-json/wp-json', 'wp-json' ).replace( '=/wp-json', '=' );
 }
 
-function removeTrailingSlash( url ) {
+function removeTrailingSlash( url: string ) {
 	return url.replace( /\/$/, '' );
 }
 
-function removeLeadingSlash( url ) {
+function removeLeadingSlash( url: string ) {
 	return url.replace( /^\//, '' );
 }
 
-function convertParams( root, url ) {
+function convertParams( root: string, url: string ) {
 	if ( root.indexOf( '?' ) !== -1 ) {
 		return url.replace( '?', '&' );
 	}
@@ -18,17 +25,16 @@ function convertParams( root, url ) {
 	return url;
 }
 
-function addRoute( base, route ) {
+function addRoute( base: string, route: string ) {
 	return base + '/' + route;
 }
 
-function mergeWithRoot( root, url ) {
+function mergeWithRoot( root: string, url: string ) {
 	return removeWP( addRoute( removeTrailingSlash( root ), convertParams( root, removeLeadingSlash( url ) ) ) );
 }
 
-function createRootURLMiddleware( rootURL ) {
-	function middleware( options, next ) {
-		// Absolute URL - do nothing
+function createRootURLMiddleware( rootURL: string ) {
+	const middleware: Middleware & { rootURL: string } = ( options, next ) => {
 		if ( options.url.substr( 0, 4 ) === 'http' ) {
 			return next( options );
 		}
@@ -37,7 +43,7 @@ function createRootURLMiddleware( rootURL ) {
 			...options,
 			url: mergeWithRoot( rootURL, options.url ),
 		} );
-	}
+	};
 
 	middleware.rootURL = rootURL;
 
