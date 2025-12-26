@@ -13,10 +13,33 @@ export type ApiRequest = {
 /**
  * Serialize query parameters for API requests
  * Handles arrays using bracket format (source[]=post&source[]=page)
+ * and nested objects using bracket syntax (filterBy[status]=enabled).
  * @param params
  */
 function stringifyApiQuery( params: ApiQuery ): string {
 	const urlParams = new URLSearchParams();
+
+	function appendObject( parent: string, obj: Record< string, unknown > ) {
+		for ( const subKey in obj ) {
+			const subValue = obj[ subKey ];
+
+			if ( subValue === null || subValue === undefined ) {
+				continue;
+			}
+
+			if ( Array.isArray( subValue ) ) {
+				for ( const item of subValue ) {
+					if ( item !== null && item !== undefined ) {
+						urlParams.append( `${ parent }[${ subKey }][]`, String( item ) );
+					}
+				}
+			} else if ( typeof subValue === 'object' ) {
+				appendObject( `${ parent }[${ subKey }]`, subValue as Record< string, unknown > );
+			} else {
+				urlParams.append( `${ parent }[${ subKey }]`, String( subValue ) );
+			}
+		}
+	}
 
 	for ( const key in params ) {
 		const value = params[ key ];
@@ -33,8 +56,8 @@ function stringifyApiQuery( params: ApiQuery ): string {
 				}
 			}
 		} else if ( typeof value === 'object' ) {
-			// For nested objects, JSON stringify (though API might not use this)
-			urlParams.append( key, JSON.stringify( value ) );
+			// Use bracket syntax for nested objects (eg filterBy[status]=enabled)
+			appendObject( key, value as Record< string, unknown > );
 		} else {
 			urlParams.append( key, String( value ) );
 		}
