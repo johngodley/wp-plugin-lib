@@ -88,12 +88,21 @@ function stringifyQueryParams( params: QueryParams ): string {
 		}
 
 		if ( Array.isArray( value ) ) {
-			// Use bracket format for arrays (source[]=post&source[]=page)
-			for ( const item of value ) {
-				if ( item !== null && item !== undefined ) {
-					urlParams.append( `${ key }[]`, String( item ) );
+			// Check if array contains objects - if so, JSON encode the entire array
+			const hasObjects = value.some( ( item ) => typeof item === 'object' && item !== null );
+			if ( hasObjects ) {
+				urlParams.append( key, JSON.stringify( value ) );
+			} else {
+				// Use bracket format for arrays (source[]=post&source[]=page)
+				for ( const item of value ) {
+					if ( item !== null && item !== undefined ) {
+						urlParams.append( `${ key }[]`, String( item ) );
+					}
 				}
 			}
+		} else if ( typeof value === 'object' ) {
+			// JSON encode objects
+			urlParams.append( key, JSON.stringify( value ) );
 		} else {
 			urlParams.append( key, String( value ) );
 		}
