@@ -35,7 +35,7 @@ function mergeWithRoot( root: string, url: string ) {
 
 function createRootURLMiddleware( rootURL: string ) {
 	const middleware: Middleware & { rootURL: string } = ( options, next ) => {
-		if ( options.url.substr( 0, 4 ) === 'http' ) {
+		if ( options.url.startsWith( 'http' ) ) {
 			return next( options );
 		}
 

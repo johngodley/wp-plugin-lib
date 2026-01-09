@@ -46,20 +46,26 @@ function isDeepEqual( a: any, b: any ): boolean {
 /**
  * Parse a query string into an object, handling arrays
  * Supports both bracket format (source[]=post) and repeated keys (source=post&source=page)
+ * Also handles numeric indices (source[0]=post&source[1]=page)
  * @param queryString
  */
 function parseQueryString( queryString: string ): QueryParams {
 	const params = new URLSearchParams( queryString );
 	const result: QueryParams = {};
 
-	// Get all unique keys
-	const keys = new Set< string >();
-	params.forEach( ( _, key ) => keys.add( key ) );
+	// Group keys by their base name (without brackets)
+	const keyGroups = new Map< string, Array< { key: string; value: string } > >();
+	params.forEach( ( value, key ) => {
+		// Remove brackets with or without indices (e.g., "source[]" -> "source", "source[0]" -> "source")
+		const cleanKey = key.replace( /\[\d*\]$/, '' );
+		if ( ! keyGroups.has( cleanKey ) ) {
+			keyGroups.set( cleanKey, [] );
+		}
+		keyGroups.get( cleanKey )!.push( { key, value } );
+	} );
 
-	for ( const key of keys ) {
-		// Remove brackets from key if present (e.g., "source[]" -> "source")
-		const cleanKey = key.replace( /\[\]$/, '' );
-		const values = params.getAll( key );
+	for ( const [ cleanKey, entries ] of keyGroups ) {
+		const values = entries.map( ( entry ) => entry.value );
 
 		// If multiple values, store as array; otherwise store as single value
 		if ( values.length > 1 ) {
