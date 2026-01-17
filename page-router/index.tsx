@@ -11,18 +11,6 @@ type PageRouterProps = {
 	children: ReactNode;
 };
 
-type RedirectionContext = {
-	caps?: {
-		pages?: string[];
-	};
-};
-
-declare global {
-	interface Window {
-		Redirectioni10n?: RedirectionContext;
-	}
-}
-
 function PageRouter( props: PageRouterProps ) {
 	const { page, setPage, children, onPageChange, defaultPage, baseUrl, allowedPages } = props;
 	const previousPage = useRef< string | undefined >( undefined );
