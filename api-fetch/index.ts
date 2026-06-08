@@ -40,11 +40,28 @@ const checkStatus = ( response: Response ) => {
 	throw response;
 };
 
+export function getActionUrl( url: string ) {
+	const hashIndex = url.indexOf( '#' );
+	const hash = hashIndex >= 0 ? url.slice( hashIndex + 1 ) : '';
+	const urlAndQuery = hashIndex >= 0 ? url.slice( 0, hashIndex ) : url;
+	const queryIndex = urlAndQuery.indexOf( '?' );
+
+	if ( queryIndex === -1 ) {
+		return url;
+	}
+
+	const path = urlAndQuery.slice( 0, queryIndex );
+	const query = urlAndQuery.slice( queryIndex + 1 );
+
+	const params = new URLSearchParams( query );
+	params.delete( '_wpnonce' );
+	params.delete( '_cb' );
+
+	return path + ( params.toString() ? '?' + params.toString() : '' ) + ( hash ? '#' + hash : '' );
+}
+
 const recordResponse = ( response: Response, request: ApiFetchOptions ) => {
-	const actionUrl = request.url
-		.replace( /[\?&]_wpnonce=[a-f0-9]*/g, '' )
-		.replace( /[\?&]_cb=[^&]*/g, '' )
-		.replace( /\?$/, '' );
+	const actionUrl = getActionUrl( request.url );
 
 	request.apiFetch = {
 		action: actionUrl + ' ' + request.method.toUpperCase(),
