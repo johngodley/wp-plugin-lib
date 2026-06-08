@@ -41,8 +41,13 @@ const checkStatus = ( response: Response ) => {
 };
 
 const recordResponse = ( response: Response, request: ApiFetchOptions ) => {
+	const actionUrl = request.url
+		.replace( /[\?&]_wpnonce=[a-f0-9]*/g, '' )
+		.replace( /[\?&]_cb=[^&]*/g, '' )
+		.replace( /\?$/, '' );
+
 	request.apiFetch = {
-		action: request.url.replace( /[\?&]_wpnonce=[a-f0-9]*/, '' ) + ' ' + request.method.toUpperCase(),
+		action: actionUrl + ' ' + request.method.toUpperCase(),
 		body: typeof request.body === 'object' ? JSON.stringify( request.body ) : request.body,
 	};
 	request.headers = response.headers as any;

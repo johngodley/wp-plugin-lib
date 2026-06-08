@@ -28,4 +28,13 @@ describe( 'getApiRequest', () => {
 
 		expect( request.url ).toBe( 'redirection/v1/plugin/?_cb=42' );
 	} );
+
+	test( 'preserves caller-provided cache-buster values', () => {
+		Date.now = jest.fn().mockReturnValue( 42 );
+
+		const request = getApiRequest( 'redirection/v1/plugin', { _cb: 99, page: 1 } );
+
+		expect( request.url ).toContain( '_cb=99' );
+		expect( request.url ).not.toContain( '_cb=42' );
+	} );
 } );

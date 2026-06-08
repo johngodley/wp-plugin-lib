@@ -95,7 +95,10 @@ const postApiheaders = (): Record< string, string > => {
 
 export const getApiRequest = ( path: string, query: ApiQuery = {} ): ApiRequest => ( {
 	headers: getApiHeaders(),
-	url: getRequestString( path, { ...query, _cb: Date.now() } ),
+	url: getRequestString( path, {
+		...query,
+		_cb: query._cb ?? Date.now(),
+	} ),
 	credentials: 'include',
 	method: 'get',
 	cache: 'no-store',
