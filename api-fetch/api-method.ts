@@ -5,6 +5,7 @@ export type ApiRequest = {
 	url: string;
 	credentials: RequestCredentials;
 	method: string;
+	cache?: RequestCache;
 	redirect?: RequestRedirect;
 	body?: BodyInit | null;
 	[ key: string ]: unknown;
@@ -94,9 +95,10 @@ const postApiheaders = (): Record< string, string > => {
 
 export const getApiRequest = ( path: string, query: ApiQuery = {} ): ApiRequest => ( {
 	headers: getApiHeaders(),
-	url: getRequestString( path, query ),
+	url: getRequestString( path, { ...query, _cb: Date.now() } ),
 	credentials: 'include',
 	method: 'get',
+	cache: 'no-store',
 	redirect: 'error',
 } );
 
