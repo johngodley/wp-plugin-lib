@@ -150,12 +150,34 @@ const apiFetch = ( < T = unknown >( request: ApiFetchOptions ): Promise< T > => 
 					return reject( error );
 				}
 
+				if ( request.apiFetch?.nonceRefreshed ) {
+						return reject(
+							createApiError(
+								'rest_cookie_invalid_nonce',
+								'REST API nonce refresh was rejected after retry.',
+								request
+							)
+						);
+				}
+
 				window
 					.fetch( 'admin-ajax.php?action=rest-nonce' )
 					.then( checkStatus )
 					.then( getResponseData )
 					.then( ( text ) => {
+						if ( ! text ) {
+								throw createApiError(
+									'rest_cookie_invalid_nonce',
+									'REST API nonce refresh failed.',
+									request
+								);
+						}
+
 						apiFetch.nonceMiddleware.nonce = text;
+						request.apiFetch = {
+							...( request.apiFetch || {} ),
+							nonceRefreshed: true,
+						};
 
 						apiFetch< T >( request ).then( resolve ).catch( reject );
 					} )
