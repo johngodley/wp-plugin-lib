@@ -151,13 +151,13 @@ const apiFetch = ( < T = unknown >( request: ApiFetchOptions ): Promise< T > => 
 				}
 
 				if ( request.apiFetch?.nonceRefreshed ) {
-						return reject(
-							createApiError(
-								'rest_cookie_invalid_nonce',
-								'REST API nonce refresh was rejected after retry.',
-								request
-							)
-						);
+					return reject(
+						createApiError(
+							'rest_cookie_invalid_nonce',
+							'REST API nonce refresh was rejected after retry.',
+							request
+						)
+					);
 				}
 
 				window
@@ -166,11 +166,11 @@ const apiFetch = ( < T = unknown >( request: ApiFetchOptions ): Promise< T > => 
 					.then( getResponseData )
 					.then( ( text ) => {
 						if ( ! text ) {
-								throw createApiError(
-									'rest_cookie_invalid_nonce',
-									'REST API nonce refresh failed.',
-									request
-								);
+							throw createApiError(
+								'rest_cookie_invalid_nonce',
+								'REST API nonce refresh failed.',
+								request
+							);
 						}
 
 						apiFetch.nonceMiddleware.nonce = text;
