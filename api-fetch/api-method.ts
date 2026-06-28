@@ -122,6 +122,17 @@ export const uploadApiRequest = ( path: string, params: ApiQuery, file: File | B
 	delete request.headers[ 'Content-Type' ];
 	const form = new FormData();
 	form.append( 'file', file );
+
+	for ( const key in params ) {
+		const value = params[ key ];
+
+		if ( value === null || value === undefined ) {
+			continue;
+		}
+
+		form.append( key, String( value ) );
+	}
+
 	request.body = form;
 
 	return request;
