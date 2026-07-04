@@ -123,14 +123,32 @@ export const uploadApiRequest = ( path: string, params: ApiQuery, file: File | B
 	const form = new FormData();
 	form.append( 'file', file );
 
-	for ( const key in params ) {
-		const value = params[ key ];
-
+	function appendValue( key: string, value: unknown ) {
 		if ( value === null || value === undefined ) {
-			continue;
+			return;
+		}
+
+		if ( Array.isArray( value ) ) {
+			for ( const item of value ) {
+				appendValue( `${ key }[]`, item );
+			}
+
+			return;
+		}
+
+		if ( typeof value === 'object' ) {
+			for ( const subKey in value as Record< string, unknown > ) {
+				appendValue( `${ key }[${ subKey }]`, ( value as Record< string, unknown > )[ subKey ] );
+			}
+
+			return;
 		}
 
 		form.append( key, String( value ) );
+	}
+
+	for ( const key in params ) {
+		appendValue( key, params[ key ] );
 	}
 
 	request.body = form;
